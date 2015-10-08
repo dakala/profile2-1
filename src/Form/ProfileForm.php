@@ -114,7 +114,7 @@ class ProfileForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    $profile_type = ProfileType::load($this->entity->bundle());
+    $type = ProfileType::load($this->entity->bundle());
 
     // Active profile for non administers if profile is new.
     if (!\Drupal::currentUser()->hasPermission('administer profiles') && $this->entity->isNew()) {
@@ -122,10 +122,10 @@ class ProfileForm extends ContentEntityForm {
     }
     switch ($this->entity->save()) {
       case SAVED_NEW:
-        drupal_set_message(t('%label profile has been created.', ['%label' => $profile_type->label()]));
+        drupal_set_message(t('%label profile has been created.', ['%label' => $type->label()]));
         break;
       case SAVED_UPDATED:
-        drupal_set_message(t('%label profile has been updated.', ['%label' => $profile_type->label()]));
+        drupal_set_message(t('%label profile has been updated.', ['%label' => $type->label()]));
         break;
     }
 

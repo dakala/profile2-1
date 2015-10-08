@@ -21,19 +21,19 @@ class ProfileController extends ControllerBase implements ContainerInjectionInte
   /**
    * Provides the profile submission form.
    *
-   * @param \Drupal\user\UserInterface $profile_type
+   * @param \Drupal\user\UserInterface $type
    *   The user account.
-   * @param \Drupal\profile\Entity\ProfileTypeInterface $profile_type
+   * @param \Drupal\profile\Entity\ProfileTypeInterface $type
    *   The profile type entity for the profile.
    *
    * @return array
    *   A profile submission form.
    */
-  public function addProfile(UserInterface $user, ProfileTypeInterface $profile_type) {
+  public function addProfile(UserInterface $user, ProfileTypeInterface $type) {
 
     $profile = $this->entityManager()->getStorage('profile')->create([
       'uid' => $user->id(),
-      'type' => $profile_type->id(),
+      'type' => $type->id(),
     ]);
 
     return $this->entityFormBuilder()->getForm($profile, 'add', ['uid' => $user->id(), 'created' => REQUEST_TIME]);
@@ -55,15 +55,15 @@ class ProfileController extends ControllerBase implements ContainerInjectionInte
   /**
    * The _title_callback for the entity.profile.add_form route.
    *
-   * @param \Drupal\profile\Entity\ProfileTypeInterface $profile_type
+   * @param \Drupal\profile\Entity\ProfileTypeInterface $type
    *   The current profile type.
    *
    * @return string
    *   The page title.
    */
-  public function addPageTitle(ProfileTypeInterface $profile_type) {
+  public function addPageTitle(ProfileTypeInterface $type) {
     // @todo: edit profile uses this form too?
-    return $this->t('Create @label', ['@label' => $profile_type->label()]);
+    return $this->t('Create @label', ['@label' => $type->label()]);
   }
 
 }

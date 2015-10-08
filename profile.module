@@ -154,20 +154,20 @@ function profile_form_user_register_form_alter(&$form, FormStateInterface $form_
   $weight = 90;
   foreach (\Drupal::configFactory()->listAll('profile.type.') as $config_name) {
     $config = \Drupal::config($config_name);
-    $profile_type = ProfileType::load($config->get('id'));
+    $type = ProfileType::load($config->get('id'));
 
     $instances = array_filter(\Drupal::entityManager()->getFieldDefinitions('profile', $config->get('id')), function ($field_definition) {
       return $field_definition instanceof FieldConfigInterface;
     });
 
-    if ($profile_type->getRegistration() === TRUE && count($instances)) {
-      $id = $profile_type->id();
+    if ($type->getRegistration() === TRUE && count($instances)) {
+      $id = $type->id();
       $property = ['profiles',$id];
       $profile = $form_state->get($property);
       if (empty($profile)) {
         $entity = entity_create('profile', array(
           'type' => $id,
-          'langcode' => $profile_type->language() ? $profile_type->language() : \Drupal::languageManager()->getDefaultLanguage()->id
+          'langcode' => $type->language() ? $type->language() : \Drupal::languageManager()->getDefaultLanguage()->id
         ));
 
         // Attach profile entity form.
@@ -175,7 +175,7 @@ function profile_form_user_register_form_alter(&$form, FormStateInterface $form_
         $form_state->set('form_display_' . $id, EntityFormDisplay::collectRenderDisplay($entity, 'default'));
         $form['entity_' . $id] = array(
           '#type' => 'details',
-          '#title' => $profile_type->label(),
+          '#title' => $type->label(),
           '#tree' => TRUE,
           '#parents' => array('entity_' . $id),
           '#weight' => ++$weight,

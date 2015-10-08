@@ -61,20 +61,20 @@ class ProfileAccessCheck implements AccessCheckInterface {
     return FALSE;
   }
 
-  public function access(AccountInterface $account, ProfileTypeInterface $profile_type = NULL) {
+  public function access(AccountInterface $account, ProfileTypeInterface $type = NULL) {
     $access_control_handler = $this->entityManager->getAccessControlHandler('profile');
     $operation = $this->requestStack->getCurrentRequest()->attributes->get('operation');
     if ($operation == 'add') {
-      return $access_control_handler->access($profile_type, $operation, LanguageInterface::LANGCODE_DEFAULT, $account, TRUE);
+      return $access_control_handler->access($type, $operation, LanguageInterface::LANGCODE_DEFAULT, $account, TRUE);
     }
 
     // If checking whether a profile of a particular type may be created.
-    if ($profile_type) {
-      return $access_control_handler->createAccess($profile_type->id(), $account, [], TRUE);
+    if ($type) {
+      return $access_control_handler->createAccess($type->id(), $account, [], TRUE);
     }
     // If checking whether a profile of any type may be created.
-    foreach ($this->entityManager->getStorage('profile_type')->loadMultiple() as $profile_type) {
-      if (($access = $access_control_handler->createAccess($profile_type->id(), $account, [], TRUE)) && $access->isAllowed()) {
+    foreach ($this->entityManager->getStorage('profile_type')->loadMultiple() as $type) {
+      if (($access = $access_control_handler->createAccess($type->id(), $account, [], TRUE)) && $access->isAllowed()) {
         return $access;
       }
     }

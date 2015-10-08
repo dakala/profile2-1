@@ -35,15 +35,15 @@ class ProfilePermissions {
   /**
    * Builds a standard list of permissions for a given profile type.
    *
-   * @param \Drupal\profile\Entity\ProfileType $profile_type
+   * @param \Drupal\profile\Entity\ProfileType $type
    *   The machine name of the profile type.
    *
    * @return array
    *   An array of permission names and descriptions.
    */
-  protected function buildPermissions(ProfileType $profile_type) {
-    $type_id = $profile_type->id();
-    $type_params = ['%type' => $profile_type->label()];
+  protected function buildPermissions(ProfileType $type) {
+    $type_id = $type->id();
+    $type_params = ['%type' => $type->label()];
 
     return [
       "add own $type_id profile" => [

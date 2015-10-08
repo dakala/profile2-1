@@ -122,8 +122,8 @@ class ProfileTypeForm extends EntityForm {
    * @return bool
    */
   public function exists($id) {
-    $profile_type = ProfileType::load($id);
-    return !empty($profile_type);
+    $type = ProfileType::load($id);
+    return !empty($type);
   }
 
 }
