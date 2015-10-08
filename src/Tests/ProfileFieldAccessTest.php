@@ -26,12 +26,12 @@ class ProfileFieldAccessTest extends WebTestBase {
   function setUp() {
     parent::setUp();
 
-    $this->type = entity_create('profile_type', [
+    $this->type = \Drupal::entityManager()->getStorage('profile_type')->create(array(
       'id' => 'personal',
       'label' => 'Personal data',
       'weight' => 0,
       'registration' => TRUE,
-    ]);
+    ));
     $this->type->save();
 
     $this->checkPermissions([], TRUE);

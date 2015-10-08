@@ -10,6 +10,10 @@ namespace Drupal\profile\Tests;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\simpletest\WebTestBase;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 
 /**
  * Tests profile access handling.
@@ -27,10 +31,10 @@ class ProfileAccessTest extends WebTestBase {
   function setUp() {
     parent::setUp();
 
-    $this->type = entity_create('profile_type', [
+    $this->type = \Drupal::entityManager()->getStorage('profile_type')->create(array(
       'id' => 'test',
       'label' => 'Test profile',
-    ]);
+    ));
     $this->type->save();
     $id = $this->type->id();
 
@@ -56,27 +60,31 @@ class ProfileAccessTest extends WebTestBase {
     $instance = FieldConfig::create($instance);
     $instance->save();
 
-    $display = entity_get_display('profile', 'test', 'default')
-      ->setComponent($this->field->get('field_name'), [
-        'type' => 'text_default',
-      ]);
+    $display = EntityViewDisplay::create([
+      'targetEntityType' => 'profile',
+      'bundle' => 'test',
+      'mode' => 'default',
+      'status' => TRUE,
+    ]);
+    $display->setComponent('field_name', [
+      'type' => 'text_default',
+    ]);
     $display->save();
 
-    entity_get_display('profile', 'test', 'default')
-      ->setComponent($this->field->get('field_name'), [
-        'type' => 'text_default',
-      ])
-    ->save();
-
-    entity_get_form_display('profile', 'test', 'default')
-      ->setComponent($this->field->get('field_name'), [
-        'type' => 'string_textfield',
-      ])
-      ->save();
+    $form_display = EntityFormDisplay::create([
+      'targetEntityType' => 'profile',
+      'bundle' => 'test',
+      'mode' => 'default',
+      'status' => TRUE,
+    ]);
+    $form_display->setComponent('field_name', [
+      'type' => 'string_textfield',
+    ]);
+    $form_display->save();
 
     $this->checkPermissions([], TRUE);
 
-    user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, ['access user profiles']);
+    user_role_grant_permissions(AccountInterface::AUTHENTICATED_ROLE, ['access user profiles']);
     $this->admin_user = $this->drupalCreateUser([
       'administer profile types',
       "view any $id profile",
@@ -105,10 +113,12 @@ class ProfileAccessTest extends WebTestBase {
     ];
     $this->drupalPostForm("user/$uid/edit/profile/$id", $edit, t('Save'));
 
-    $profiles = entity_load_multiple_by_properties('profile', [
-      'uid' => $uid,
-      'type' => $this->type->id(),
-    ]);
+    $profiles = \Drupal::entityManager()
+      ->getStorage('profile')
+      ->loadByProperties([
+        'uid'  => $uid,
+        'type' => $this->type->id(),
+      ]);
 
     $profile = reset($profiles);
     $profile_id = $profile->id();
@@ -133,7 +143,7 @@ class ProfileAccessTest extends WebTestBase {
     $this->assertNoLinkByHref("user/$uid/delete/profile/$id/$profile_id");
 
     // Allow users to edit own profiles.
-    user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, ["edit own $id profile"]);
+    user_role_grant_permissions(AccountInterface::AUTHENTICATED_ROLE, ["edit own $id profile"]);
 
     // Verify that the user is able to edit the own profile.
     $value = $this->randomMachineName();
@@ -141,7 +151,7 @@ class ProfileAccessTest extends WebTestBase {
       "{$field_name}[0][value]" => $value,
     ];
     $this->drupalPostForm("user/$uid/edit/profile/$id/$profile_id", $edit, t('Save'));
-    $this->assertText(format_string('profile has been updated.'));
+    $this->assertText(new FormattableMarkup('profile has been updated.', ));
 
     // Verify that the own profile is still not visible on the account page.
     $this->drupalGet("user/$uid");
@@ -149,7 +159,7 @@ class ProfileAccessTest extends WebTestBase {
     $this->assertNoText($value);
 
     // Allow users to view own profiles.
-    user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, ["view own $id profile"]);
+    user_role_grant_permissions(AccountInterface::AUTHENTICATED_ROLE, ["view own $id profile"]);
 
     // Verify that the own profile is visible on the account page.
     $this->drupalGet("user/$uid");
@@ -157,13 +167,13 @@ class ProfileAccessTest extends WebTestBase {
     $this->assertText($value);
 
     // Allow users to delete own profiles.
-    user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, ["delete own $id profile"]);
+    user_role_grant_permissions(AccountInterface::AUTHENTICATED_ROLE, ["delete own $id profile"]);
 
     // Verify that the user can delete the own profile.
     $this->drupalGet("user/$uid/edit/profile/$id/$profile_id");
     $this->clickLink(t('Delete'));
     $this->drupalPostForm(NULL, [], t('Delete'));
-    $this->assertRaw(format_string('@label profile deleted.', ['@label' => $this->type->label()]));
+    $this->assertRaw(new FormattableMarkup('@label profile deleted.', ['@label' => $this->type->label()]));
     $this->assertUrl("user/$uid");
 
     // Verify that the profile is gone.

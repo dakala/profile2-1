@@ -9,7 +9,6 @@ use Drupal\user\UserInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Url;
 use Drupal\Core\Access\AccessResult;
 use Drupal\profile\Entity\ProfileType;
@@ -17,6 +16,7 @@ use Drupal\profile\ProfileInterface;
 use Drupal\field\FieldConfigInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Html;
 /**
  * Denotes that the profile is not active.
  */
@@ -135,9 +135,9 @@ function profile_user_view(array &$build, UserInterface $account, EntityViewDisp
  * Implements hook_user_delete().
  */
 function profile_user_delete(EntityInterface $entity) {
-  $list = entity_load_multiple_by_properties('profile', array(
-    'uid' => $entity->id(),
-  ));
+  $list = \Drupal::entityManager()->getStorage('profile')->loadByProperties([
+      'uid' => $entity->id(),
+    ]);
   foreach($list as $profile) {
     $profile->delete();
   }
@@ -165,10 +165,11 @@ function profile_form_user_register_form_alter(&$form, FormStateInterface $form_
       $property = ['profiles',$id];
       $profile = $form_state->get($property);
       if (empty($profile)) {
-        $entity = entity_create('profile', array(
-          'type' => $id,
-          'langcode' => $profile_type->language() ? $profile_type->language() : \Drupal::languageManager()->getDefaultLanguage()->id
-        ));
+        $entity = \Drupal::entityManager()->getStorage('profile')->create(array(
+            'type'     => $id,
+            'langcode' => $profile_type->language() ? $profile_type->language() : \Drupal::languageManager()
+              ->getDefaultLanguage()->id
+          ));
 
         // Attach profile entity form.
         $form_state->set($property, $entity);
@@ -239,9 +240,9 @@ function profile_theme() {
  */
 function template_preprocess_profile_items(&$variables) {
   if (count($variables['profile_items'])) {
-    $variables['title'] = SafeMarkup::checkPlain($variables['type']);
+    $variables['title'] = Html::escape($variables['type']);
     foreach ($variables['profile_items'] as $profile_item) {
-      $variables['items'][] = entity_view($profile_item, 'default');
+      $variables['items'][] = \Drupal::entityManager()->getViewBuilder($profile_item->getEntityTypeId())->view($profile_item, 'default');
       if ($profile_item->access('update')) {
         $variables['edit_links'][] = \Drupal::l(t('Edit'), new Url("entity.profile.edit_form", array(
           'user' => \Drupal::currentUser()->id(),

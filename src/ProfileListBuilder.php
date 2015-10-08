@@ -102,7 +102,7 @@ class ProfileListBuilder extends EntityListBuilder {
     $row['label']['data'] = [
         '#type' => 'link',
         '#title' => $entity->label(),
-        '#suffix' => ' ' . drupal_render($mark),
+        '#suffix' => ' ' . \Drupal::service('renderer')->render($mark),
       ] + $uri->toRenderArray();
     $row['type'] = $entity->getType()->id();
     $row['owner']['data'] = [
@@ -144,7 +144,7 @@ class ProfileListBuilder extends EntityListBuilder {
   protected function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    $destination = drupal_get_destination();
+    $destination = \Drupal::destination()->getAsArray();
     foreach ($operations as $key => $operation) {
       $operations[$key]['query'] = $destination;
     }
