@@ -72,7 +72,7 @@ function profile_profile_access(ProfileInterface $profile, $op, $account) {
         return AccessResult::allowed()->cachePerPermissions();
       }
       else {
-        return AccessResult::allowedIf($account->hasPermission('edit own ' . $type . ' profile', $account) && ($account->id() == $profile->getOwnerId()))->cachePerPermissions()->cachePerUser()->cacheUntilEntityChanges($profile);
+        return AccessResult::allowedIf($account->hasPermission('edit own ' . $type . ' profile', $account) && ($account->id() == $profile->getOwnerId()))->cachePerPermissions()->cachePerUser()->addCacheableDependency($profile);
       }
 
     case 'delete':
@@ -80,7 +80,7 @@ function profile_profile_access(ProfileInterface $profile, $op, $account) {
         return AccessResult::allowed()->cachePerPermissions();
       }
       else {
-        return AccessResult::allowedIf($account->hasPermission('delete own ' . $type . ' profile', $account) && ($account->id() == $profile->getOwnerId()))->cachePerPermissions()->cachePerUser()->cacheUntilEntityChanges($profile);
+        return AccessResult::allowedIf($account->hasPermission('delete own ' . $type . ' profile', $account) && ($account->id() == $profile->getOwnerId()))->cachePerPermissions()->cachePerUser()->addCacheableDependency($profile);
       }
 
     default:
